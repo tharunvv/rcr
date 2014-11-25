@@ -131,18 +131,48 @@ int check_id(int i,int j)
 
   }
 }
-void pipelining(int i,int k,int l)
+void pipelining(int i,int k,int l,int m)
 {
+int q=0,z=0;
 if(l==0)
  {if((c[i].instr=="L.D")||(c[i].instr=="S.D"))
-                    for(int j=0;j<5;j++)
+                    for(int j=0;q==0;j++)
+                    {if(m==0)
                     pipe[i].stages[j+k]=a.stld[j];
+                    else if (j==1)
+                     pipe[i].stages[j+k]="  s";
+                     else{
+                     pipe[i].stages[j+k]=a.stld[z];
+                     z++;
+                     }
+                      if(pipe[i].stages[j+k]==" WB")
+                     q=1;}
+
  if((c[i].instr=="ADD.D")||(c[i].instr=="SUB.D"))
-                    for(int j=0;j<8;j++)
+                    for(int j=0;q==0;j++)
+                    {if(m==0)
                     pipe[i].stages[j+k]=a.addsub[j];
+                    else if (j==1)
+                     pipe[i].stages[j+k]="  s";
+                     else{
+                     pipe[i].stages[j+k]=a.addsub[z];
+                     z++;
+                     }
+                      if(pipe[i].stages[j+k]==" WB")
+                     q=1;}
+
 if(c[i].instr=="MUL.D")
-                    for(int j=0;j<11;j++)
+                    for(int j=0;q==0;j++)
+                    {if(m==0)
                     pipe[i].stages[j+k]=a.mult[j];
+                    else if (j==1)
+                     pipe[i].stages[j+k]="  s";
+                     else{
+                     pipe[i].stages[j+k]=a.mult[z];
+                     z++;
+                     }
+                      if(pipe[i].stages[j+k]==" WB")
+                     q=1;}
 }
 else
    {int z=0,q=0;
@@ -152,7 +182,7 @@ else
                     if(j==0)
                     {pipe[i].stages[j+k]=a.stld[j];z++;}
                      else
-                     {if((j+k)<(l-1))
+                     {if((j+k)<(l+m-1))
 
                      pipe[i].stages[j+k]="  s";
                      else
@@ -167,7 +197,7 @@ else
                     if(j==0)
                     {
                      pipe[i].stages[j+k]=a.addsub[z];z++;}
-                     else{if((j+k)<(l))
+                     else{if((j+k)<(l+m))
                      pipe[i].stages[j+k]="  s";
                      else
                      {pipe[i].stages[j+k]=a.addsub[z];z++;}
@@ -275,6 +305,53 @@ for(int j=0;j<i;j++)
   }
    return temp;
   }
+int check_wb(int i, int l,int y)
+{ int s;
+int h;
+  int e=0,f=0;
+  if(c[i].instr=="S.D")
+     return 0;
+  else
+ {
+
+    for(int j=0; j<i;j++)
+   {
+    h=check_previnst(j);
+
+    if(c[i].instr=="L.D")
+    {if (l!=0)
+    s=l+2;
+    else
+    s=y+4;}
+    else {
+    if (l!=0)
+    s=l+3;
+    else
+    {if(c[i].instr=="MUL.D")
+    s=y+10;
+    else
+    s=y+7;
+    }}
+   if(c[j].instr!="S.D")
+    {
+    for(int k=0;e==0;k++)
+    {
+    if(pipe[j].stages[k]==" WB")
+    {if(k==s)
+      {f=1; goto loop;}
+
+    else
+      e=1;}
+
+    }
+
+  }
+}
+    }
+    loop : if(f==0)
+    return 0;
+    else
+    return 1;}
 
 int instrcall()
 {
@@ -286,7 +363,9 @@ int instrcall()
     {
     int k=check_id(i,i-1);//check for giving next if
     int l=check_dependency(i);
-    pipelining(i,k,l);
+
+    int m=check_wb(i,l,k);
+    pipelining(i,k,l,m);
     }
     }
 }
